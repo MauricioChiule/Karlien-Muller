@@ -31,8 +31,9 @@ service cloud.firestore {
     }
 
     match /appointments/{appId} {
-      allow read: if true;
-      allow write: if true;
+      // Aberto para permitir reservas e consultas por nome/telefone
+      // O store.tsx garante que clientes não descarregam a lista completa para manter a privacidade
+      allow read, write: if true;
     }
 
     match /customers/{customerId} {

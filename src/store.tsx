@@ -73,6 +73,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     let unsubAppointments: () => void = () => {};
     let unsubCustomers: () => void = () => {};
 
+    // ONLY fetch the full list if the user is a verified Admin
     if (isAdmin) {
       unsubAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
         const apps = snapshot.docs.map(doc => doc.data() as Appointment);
@@ -87,10 +88,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         console.error("Customers fetch error:", error);
       });
     } else {
+      // If client, we don't hold any appointments in state by default for privacy
       setAppointments([]);
       setCustomers([]);
     }
-    
+
     return () => {
       unsubServices();
       unsubProfessionals();

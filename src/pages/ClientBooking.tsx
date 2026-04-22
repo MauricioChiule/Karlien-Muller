@@ -87,9 +87,8 @@ export const ClientBooking = ({ onGoToAppointments }: { onGoToAppointments?: () 
         }
       }
 
-      // Check conflicts
-      const allSlotsToCheck = [...(publicSlots || []), ...(appointments || [])];
-      const hasConflict = allSlotsToCheck.some(app => 
+      // Check conflicts using public slots (available to all for privacy)
+      const hasConflict = (publicSlots || []).some(app => 
         app.professionalId === professionalId && 
         app.date === date && 
         app.time === timeString &&
@@ -102,7 +101,7 @@ export const ClientBooking = ({ onGoToAppointments }: { onGoToAppointments?: () 
       current = new Date(current.getTime() + 30 * 60000);
     }
     return slots;
-  }, [professionalId, date, appointments, publicSlots, selectedProfessional]);
+  }, [professionalId, date, publicSlots, selectedProfessional]);
 
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
