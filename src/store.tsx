@@ -1,33 +1,33 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Appointment, Professional, Service, Customer } from './types';
 import { addDays, format, startOfToday } from 'date-fns';
-import { db, handleFirestoreError, OperationType } from './lib/firebase';
+import { db, handleFirestoreError, OperationType, auth } from './lib/firebase';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface AppContextType {
   professionals: Professional[];
   services: Service[];
   appointments: Appointment[];
   customers: Customer[];
-  addProfessional: (p: Professional) => void;
-  updateProfessional: (p: Professional) => void;
-  removeProfessional: (id: string) => void;
-  addService: (s: Service) => void;
-  updateService: (s: Service) => void;
-  removeService: (id: string) => void;
-  addAppointment: (a: Appointment) => void;
-  updateAppointmentStatus: (id: string, status: 'Pendente' | 'Confirmado' | 'Cancelado') => void;
-  updateAppointment: (a: Appointment) => void;
-  removeAppointment: (id: string) => void;
-  addCustomer: (c: Customer) => void;
-  updateCustomer: (c: Customer) => void;
-  removeCustomer: (id: string) => void;
-  syncCustomerFromAppointment: (a: Appointment) => void;
+  publicSlots: any[];
+  addProfessional: (p: Professional) => Promise<void>;
+  updateProfessional: (p: Professional) => Promise<void>;
+  removeProfessional: (id: string) => Promise<void>;
+  addService: (s: Service) => Promise<void>;
+  updateService: (s: Service) => Promise<void>;
+  removeService: (id: string) => Promise<void>;
+  addAppointment: (a: Appointment) => Promise<void>;
+  updateAppointmentStatus: (id: string, status: 'Pendente' | 'Confirmado' | 'Cancelado') => Promise<void>;
+  updateAppointment: (a: Appointment) => Promise<void>;
+  removeAppointment: (id: string) => Promise<void>;
+  addCustomer: (c: Customer) => Promise<void>;
+  updateCustomer: (c: Customer) => Promise<void>;
+  removeCustomer: (id: string) => Promise<void>;
+  syncCustomerFromAppointment: (a: Appointment) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const today = startOfToday();
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -37,60 +37,54 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [publicSlots, setPublicSlots] = useState<any[]>([]);
 
   useEffect(() => {
-    import('./lib/firebase').then(({ db }) => {
-      import('firebase/firestore').then(({ collection, onSnapshot, setDoc, doc }) => {
-        // Services
-        const unsubServices = onSnapshot(collection(db, 'services'), (snapshot) => {
-          setServices(snapshot.docs.map(d => d.data() as Service));
-        });
-
-        // Professionals
-        const unsubProfessionals = onSnapshot(collection(db, 'professionals'), (snapshot) => {
-          setProfessionals(snapshot.docs.map(d => d.data() as Professional));
-        });
-
-        // Always listen to public slots (safe for all)
-        const unsubPublic = onSnapshot(collection(db, 'public_slots'), (snapshot) => {
-          setPublicSlots(snapshot.docs.map(doc => doc.data()));
-        }, () => {});
-
-        let unsubAppointments: () => void = () => {};
-        let unsubCustomers: () => void = () => {};
-
-        import('firebase/auth').then(({ getAuth, onAuthStateChanged }) => {
-          const auth = getAuth();
-          onAuthStateChanged(auth, (user) => {
-            if (user) {
-              unsubAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
-                 const apps = snapshot.docs.map(doc => doc.data() as Appointment);
-                 setAppointments(apps);
-              }, (error) => {
-                 console.error("Appointments fetch error:", error);
-              });
-
-              unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
-                setCustomers(snapshot.docs.map(doc => doc.data() as Customer));
-              }, (error) => {
-                console.error("Customers fetch error:", error);
-              });
-            } else {
-              setAppointments([]);
-              setCustomers([]);
-              unsubAppointments();
-              unsubCustomers();
-            }
-          });
-        });
-        
-        return () => {
-          unsubServices();
-          unsubProfessionals();
-          unsubPublic();
-          unsubAppointments();
-          unsubCustomers();
-        };
-      });
+    // Services
+    const unsubServices = onSnapshot(collection(db, 'services'), (snapshot) => {
+      setServices(snapshot.docs.map(d => d.data() as Service));
     });
+
+    // Professionals
+    const unsubProfessionals = onSnapshot(collection(db, 'professionals'), (snapshot) => {
+      setProfessionals(snapshot.docs.map(d => d.data() as Professional));
+    });
+
+    // Always listen to public slots (safe for all)
+    const unsubPublic = onSnapshot(collection(db, 'public_slots'), (snapshot) => {
+      setPublicSlots(snapshot.docs.map(doc => doc.data()));
+    }, () => {});
+
+    let unsubAppointments: () => void = () => {};
+    let unsubCustomers: () => void = () => {};
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        unsubAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
+          const apps = snapshot.docs.map(doc => doc.data() as Appointment);
+          setAppointments(apps);
+        }, (error) => {
+          console.error("Appointments fetch error:", error);
+        });
+
+        unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+          setCustomers(snapshot.docs.map(doc => doc.data() as Customer));
+        }, (error) => {
+          console.error("Customers fetch error:", error);
+        });
+      } else {
+        setAppointments([]);
+        setCustomers([]);
+        unsubAppointments();
+        unsubCustomers();
+      }
+    });
+    
+    return () => {
+      unsubServices();
+      unsubProfessionals();
+      unsubPublic();
+      unsubAppointments();
+      unsubCustomers();
+      unsubAuth();
+    };
   }, []);
 
   const addProfessional = async (p: Professional) => {
@@ -243,27 +237,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const syncCustomerFromAppointment = async (a: Appointment) => {
-    // Basic logic: group by phone or name
-    // For this app, let's use phone as unique identifier for matching existing, or create new
-    const phone = a.clientPhone.replace(/\s+/g, '');
-    const existing = customers.find(c => c.phone.replace(/\s+/g, '') === phone);
+    try {
+      const phone = a.clientPhone.replace(/\s+/g, '');
+      const existing = customers.find(c => c.phone.replace(/\s+/g, '') === phone);
 
-    if (existing) {
-      const updated = {
-        ...existing,
-        appointmentHistory: [...new Set([...existing.appointmentHistory, a.id])],
-      };
-      await updateCustomer(updated);
-    } else {
-      const newCustomer: Customer = {
-        id: `cust_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        name: a.clientName,
-        phone: a.clientPhone,
-        notes: '',
-        appointmentHistory: [a.id],
-        createdAt: new Date().toISOString()
-      };
-      await addCustomer(newCustomer);
+      if (existing) {
+        // If logged in as admin, we can update. If not, this might fail but we catch it.
+        const updated = {
+          ...existing,
+          appointmentHistory: [...new Set([...existing.appointmentHistory, a.id])],
+        };
+        await updateCustomer(updated);
+      } else {
+        const newCustomer: Customer = {
+          id: `cust_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          name: a.clientName,
+          phone: a.clientPhone,
+          notes: '',
+          appointmentHistory: [a.id],
+          createdAt: new Date().toISOString()
+        };
+        await addCustomer(newCustomer);
+      }
+    } catch (err) {
+      console.warn("Customer sync skipped or failed (likely insufficient permissions for client):", err);
+      // We don't throw here to avoid breaking the main appointment creation flow for clients
     }
   };
 

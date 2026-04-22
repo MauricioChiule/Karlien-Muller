@@ -8,30 +8,30 @@ import toast from 'react-hot-toast';
 
 export const Dashboard = () => {
   const { t, dateLocale } = useI18n();
-  const { appointments, professionals, services, updateAppointmentStatus, removeAppointment } = useAppStore() as any;
+  const { appointments, professionals, services, updateAppointmentStatus, removeAppointment } = useAppStore();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('');
 
   const todayAppointments = useMemo(() => {
-    return appointments.filter((a: any) => isToday(parseISO(a.date)));
+    return appointments.filter((a) => isToday(parseISO(a.date)));
   }, [appointments]);
 
-  const uniqueClientsToday = new Set(todayAppointments.map((a: any) => a.clientPhone)).size;
+  const uniqueClientsToday = new Set(todayAppointments.map((a) => a.clientPhone)).size;
 
   const filteredAppointments = useMemo(() => {
-    return appointments.filter((app: any) => {
+    return appointments.filter((app) => {
       const matchesSearch = app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             app.clientPhone.includes(searchTerm);
       const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
       const matchesDate = !dateFilter || app.date === dateFilter;
       
       return matchesSearch && matchesStatus && matchesDate;
-    }).sort((a: any, b: any) => {
+    }).sort((a, b) => {
       // Sort by creation date DESC
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
       return dateB - dateA;
     });
   }, [appointments, searchTerm, statusFilter, dateFilter]);
@@ -49,11 +49,11 @@ export const Dashboard = () => {
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'Confirmado':
-        return <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><CheckCircle2 size={12}/> {t('dashboard.confirmed')}</span>;
+        return <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><CheckCircle2 size={12}/> {t('dashboard.confirm')}</span>;
       case 'Cancelado':
-        return <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><XCircle size={12}/> {t('dashboard.cancelled')}</span>;
+        return <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><XCircle size={12}/> {t('dashboard.cancel')}</span>;
       default:
-        return <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><Clock size={12}/> {t('dashboard.pending')}</span>;
+        return <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold flex items-center gap-1 w-max"><Clock size={12}/> {t('booking.status_pending') || 'Pendente'}</span>;
     }
   };
 

@@ -120,7 +120,7 @@ service cloud.firestore {
 
     match /customers/{customerId} {
       allow read: if isAdmin();
-      allow create: if isAdmin() && isValidId(customerId) && isValidCustomer(incoming()) && incoming().id == customerId;
+      allow create: if isValidId(customerId) && isValidCustomer(incoming()) && incoming().id == customerId;
       allow update: if isAdmin() && isValidId(customerId) && isValidCustomer(incoming()) && incoming().id == customerId;
       allow delete: if isAdmin();
     }

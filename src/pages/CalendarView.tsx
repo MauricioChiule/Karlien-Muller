@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 
 export const CalendarView = () => {
   const { t, dateLocale } = useI18n();
-  const { appointments, professionals, services } = useAppStore() as any;
+  const { appointments, professionals, services } = useAppStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedProfId, setSelectedProfId] = useState<string>('all');
   
@@ -17,8 +17,8 @@ export const CalendarView = () => {
   
   const dayAppointments = useMemo(() => {
     return appointments
-      .filter((a: any) => a.date === selectedDateStr && (selectedProfId === 'all' || a.professionalId === selectedProfId))
-      .sort((a: any, b: any) => a.time.localeCompare(b.time));
+      .filter((a) => a.date === selectedDateStr && (selectedProfId === 'all' || a.professionalId === selectedProfId))
+      .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, selectedDateStr, selectedProfId]);
 
   // Generate slots from 08:00 to 19:30
@@ -110,7 +110,7 @@ export const CalendarView = () => {
         >
           <User size={16} /> {t('calendar.whole_team') || 'Equipa Completa'}
         </button>
-        {professionals.map((p: any) => (
+        {professionals.map((p) => (
           <button
             key={p.id}
             onClick={() => setSelectedProfId(p.id)}

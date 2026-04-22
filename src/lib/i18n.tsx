@@ -66,7 +66,8 @@ const translations = {
       time_on: "Horários em",
       at: "às",
       with: "com",
-      choose_another_date: "Escolher outra data"
+      choose_another_date: "Escolher outra data",
+      status_pending: "Pendente"
     },
     dashboard: {
       overview: "Faça a gestão de todas as reservas do salão.",
@@ -244,7 +245,8 @@ const translations = {
       time_on: "Times on",
       at: "at",
       with: "with",
-      choose_another_date: "Choose another date"
+      choose_another_date: "Choose another date",
+      status_pending: "Pending"
     },
     dashboard: {
       overview: "Manage all salon bookings securely.",
@@ -422,7 +424,8 @@ const translations = {
       time_on: "Horarios el",
       at: "a las",
       with: "con",
-      choose_another_date: "Elegir otra fecha"
+      choose_another_date: "Elegir otra fecha",
+      status_pending: "Pendiente"
     },
     dashboard: {
       overview: "Gestione todas las reservas del salón de forma segura.",
@@ -600,7 +603,8 @@ const translations = {
       time_on: "Horaires du",
       at: "à",
       with: "avec",
-      choose_another_date: "Choisir une autre date"
+      choose_another_date: "Choisir une autre date",
+      status_pending: "En attente"
     },
     dashboard: {
       overview: "Gérez toutes les réservations du salon.",
