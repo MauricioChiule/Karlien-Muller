@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Outfit", ui-sans-serif, system-ui, sans-serif; /* Reused for headings, keeping variable name to avoid refactoring all components right away, or mapping to font-sans */
+
+  --color-tulip-50: #fdf8fb;
+  --color-tulip-100: #fce7f3;
+  --color-tulip-200: #fbcfe8;
+  --color-tulip-300: #f9a8d4;
+  --color-tulip-400: #f472b6;
+  --color-tulip-500: #ec4899;
+  --color-tulip-600: #db2777;
+  --color-tulip-700: #be185d;
+  --color-tulip-800: #9d174d;
+  --color-tulip-900: #831843;
+
+  --color-lilac-50: #faf5ff;
+  --color-lilac-100: #f3e8ff;
+  --color-lilac-200: #e9d5ff;
+  --color-lilac-300: #d8b4fe;
+  --color-lilac-400: #c084fc;
+  --color-lilac-500: #a855f7;
+  --color-lilac-600: #9333ea;
+  --color-lilac-700: #7e22ce;
+  --color-lilac-800: #6b21a8;
+  --color-lilac-900: #581c87;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-tulip-50);
+  color: #3f3f46;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(236, 72, 153, 0.05);
+}
+
+/* Hide scrollbar for clean look in some lists */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}

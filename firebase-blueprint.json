@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "Professional": {
+      "title": "Professional",
+      "description": "A salon professional.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "photo": { "type": "string" },
+        "specialties": { "type": "array", "items": { "type": "string" } },
+        "availability": {
+          "type": "object",
+          "properties": {
+            "days": { "type": "array", "items": { "type": "number" } },
+            "startHour": { "type": "string" },
+            "endHour": { "type": "string" }
+          }
+        }
+      },
+      "required": ["id", "name", "photo", "specialties", "availability"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A salon service.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "duration": { "type": "number" },
+        "price": { "type": "number" }
+      },
+      "required": ["id", "name", "duration", "price"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A booking made by a client for a salon service.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "clientName": { "type": "string", "description": "Name of the client" },
+        "clientPhone": { "type": "string", "description": "Phone number of the client" },
+        "serviceId": { "type": "string", "description": "Reference to the selected service" },
+        "professionalId": { "type": "string", "description": "Reference to the assigned professional" },
+        "date": { "type": "string", "description": "Date of appointment in YYYY-MM-DD" },
+        "time": { "type": "string", "description": "Time of appointment in HH:mm" },
+        "status": { "type": "string", "enum": ["Pendente", "Confirmado", "Cancelado"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "whatsappSent": { "type": "boolean" }
+      },
+      "required": ["id", "clientName", "clientPhone", "serviceId", "professionalId", "date", "time", "status", "createdAt"]
+    },
+    "PublicSlot": {
+      "title": "Public Slot",
+      "description": "Publicly viewable appointment slot to prevent double-booking without exposing PII.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "appId": { "type": "string" },
+        "professionalId": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "appId", "professionalId", "date", "time", "status"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "A salon customer/client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "notes": { "type": "string" },
+        "appointmentHistory": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "phone", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/professionals/{professionalId}": {
+      "schema": { "$ref": "#/entities/Professional" },
+      "description": "Collection of all professionals."
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Collection of all services."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Collection of all appointments."
+    },
+    "/public_slots/{slotId}": {
+      "schema": { "$ref": "#/entities/PublicSlot" },
+      "description": "Collection of all public slots."
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Collection of all customers."
+    }
+  }
+}
