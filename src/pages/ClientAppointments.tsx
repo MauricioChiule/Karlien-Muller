@@ -16,11 +16,9 @@ export const ClientAppointments = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // If Admin, they see everything from the store. If Client, they see only results from their query.
-  const displayAppointments = useMemo(() => {
-    if (isAdmin) return adminAppointments;
-    return searchResults;
-  }, [isAdmin, adminAppointments, searchResults]);
+  // For ClientAppointments page, we ALWAYS want it to start empty and only show search results
+  // We no longer bypass search for Admin to ensure maximum privacy and consistency
+  const displayAppointments = searchResults;
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
