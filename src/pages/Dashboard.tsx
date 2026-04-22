@@ -94,7 +94,7 @@ export const Dashboard = () => {
           </div>
           <p className="text-sm text-zinc-500 font-medium mb-1">{t('dashboard.pending_today') || 'Hoje Pendentes'}</p>
           <h2 className="text-3xl font-bold text-tulip-950">
-            {todayAppointments.filter((a: any) => a.status === 'Pendente').length}
+            {todayAppointments.filter((a) => a.status === 'Pendente').length}
           </h2>
         </div>
       </div>

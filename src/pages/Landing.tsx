@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Scissors, CalendarHeart, UserCog, ArrowRight, X, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useI18n } from '../lib/i18n';
+import { useAppStore } from '../store';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 const ADMIN_PASSWORD = "123456"; // depois você pode mudar
@@ -18,6 +19,7 @@ export const Landing = ({ onSelectMode }: { onSelectMode: (mode: 'client' | 'adm
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const { t } = useI18n();
+  const { setAdmin } = useAppStore();
 
   const handleAdminAuth = () => {
     setShowPasswordModal(true);
@@ -27,6 +29,7 @@ export const Landing = ({ onSelectMode }: { onSelectMode: (mode: 'client' | 'adm
     e.preventDefault();
     if (verificarAcesso(passwordInput)) {
       toast.success(t('landing.welcome'), { id: 'auth' });
+      setAdmin(true);
       setShowPasswordModal(false);
       onSelectMode('admin');
     } else {
@@ -159,7 +162,7 @@ export const Landing = ({ onSelectMode }: { onSelectMode: (mode: 'client' | 'adm
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-serif font-semibold text-tulip-900 mb-1">{t('landing.i_am_team')}</h3>
-                  <p className="text-sm text-zinc-500">{t('landing.team_desc')}</p>
+                  <p className="text-sm text-zinc-500">Acesso restrito à equipa Karlien Muller. Requer verificação de identidade Google para salvar dados.</p>
                 </div>
                 <div className="text-lilac-300 group-hover:text-lilac-600 group-hover:translate-x-1 transition-all">
                   <ArrowRight size={24} />

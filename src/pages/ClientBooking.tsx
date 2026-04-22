@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { Appointment } from '../types';
 
 export const ClientBooking = ({ onGoToAppointments }: { onGoToAppointments?: () => void }) => {
-  const { services, professionals, publicSlots, appointments, addAppointment } = useAppStore() as any;
+  const { services, professionals, publicSlots, appointments, addAppointment } = useAppStore();
   const { t, dateLocale } = useI18n();
   const [step, setStep] = useState(1);
 

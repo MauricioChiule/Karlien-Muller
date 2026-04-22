@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Appointment, Professional, Service, Customer } from './types';
 import { addDays, format, startOfToday } from 'date-fns';
-import { db, handleFirestoreError, OperationType, auth } from './lib/firebase';
+import { db, handleFirestoreError, OperationType, auth, loginWithGoogle, logoutGoogle } from './lib/firebase';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -11,6 +11,11 @@ interface AppContextType {
   appointments: Appointment[];
   customers: Customer[];
   publicSlots: any[];
+  currentUser: any;
+  isAdmin: boolean;
+  setAdmin: (isAdmin: boolean) => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
   addProfessional: (p: Professional) => Promise<void>;
   updateProfessional: (p: Professional) => Promise<void>;
   removeProfessional: (id: string) => Promise<void>;
@@ -35,6 +40,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [publicSlots, setPublicSlots] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('admin_session') === 'active';
+  });
+
+  const setAdmin = (val: boolean) => {
+    setIsAdmin(val);
+    if (val) {
+      localStorage.setItem('admin_session', 'active');
+    } else {
+      localStorage.removeItem('admin_session');
+    }
+  };
 
   useEffect(() => {
     // Services
@@ -55,27 +73,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     let unsubAppointments: () => void = () => {};
     let unsubCustomers: () => void = () => {};
 
-    const unsubAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        unsubAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
-          const apps = snapshot.docs.map(doc => doc.data() as Appointment);
-          setAppointments(apps);
-        }, (error) => {
-          console.error("Appointments fetch error:", error);
-        });
+    if (isAdmin) {
+      unsubAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
+        const apps = snapshot.docs.map(doc => doc.data() as Appointment);
+        setAppointments(apps);
+      }, (error) => {
+        console.error("Appointments fetch error:", error);
+      });
 
-        unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
-          setCustomers(snapshot.docs.map(doc => doc.data() as Customer));
-        }, (error) => {
-          console.error("Customers fetch error:", error);
-        });
-      } else {
-        setAppointments([]);
-        setCustomers([]);
-        unsubAppointments();
-        unsubCustomers();
-      }
-    });
+      unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+        setCustomers(snapshot.docs.map(doc => doc.data() as Customer));
+      }, (error) => {
+        console.error("Customers fetch error:", error);
+      });
+    } else {
+      setAppointments([]);
+      setCustomers([]);
+    }
     
     return () => {
       unsubServices();
@@ -83,9 +97,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       unsubPublic();
       unsubAppointments();
       unsubCustomers();
-      unsubAuth();
     };
-  }, []);
+  }, [isAdmin]);
 
   const addProfessional = async (p: Professional) => {
     try {
@@ -276,8 +289,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }, 
       updateAppointmentStatus, updateAppointment, removeAppointment,
       addCustomer, updateCustomer, removeCustomer, syncCustomerFromAppointment,
-      publicSlots
-    } as any}>
+      publicSlots,
+      currentUser,
+      isAdmin,
+      setAdmin,
+      login: async () => {}, // No-op, Google Auth removed
+      logout: async () => { setAdmin(false); }
+    }}>
       {children}
     </AppContext.Provider>
   );

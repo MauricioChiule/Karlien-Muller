@@ -1,20 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email_verified == true;
-    }
-
-    match /test/connection {
-      allow read: if true;
-    }
-
+    // Regras abertas conforme solicitado para permitir persistência apenas com palavra-passe da interface.
+    // Nota: Em produção real, isto deve ser protegido com Auth, mas aqui seguimos a preferência do utilizador.
+    
     function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
     function isString(val, minLen, maxLen) {
       return val is string && val.size() >= minLen && val.size() <= maxLen;
     }
@@ -25,104 +15,33 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function isValidService(data) {
-      return data.keys().hasAll(['id', 'name', 'duration', 'price'])
-        && data.keys().size() == 4
-        && isString(data.id, 1, 128)
-        && isString(data.name, 1, 100)
-        && isNumber(data.duration)
-        && isNumber(data.price);
-    }
-
-    function isValidProfessional(data) {
-      return data.keys().hasAll(['id', 'name', 'photo', 'specialties', 'availability'])
-        && data.keys().size() == 5
-        && isString(data.id, 1, 128)
-        && isString(data.name, 1, 100)
-        && isString(data.photo, 0, 500)
-        && isArray(data.specialties, 20)
-        && data.availability is map
-        && data.availability.keys().hasAll(['days', 'startHour', 'endHour'])
-        && isArray(data.availability.days, 7)
-        && isString(data.availability.startHour, 4, 5)
-        && isString(data.availability.endHour, 4, 5);
-    }
-
-    function isValidAppointment(data) {
-      return data.keys().hasAll(['id', 'clientName', 'clientPhone', 'serviceId', 'professionalId', 'date', 'time', 'status', 'createdAt'])
-        && data.keys().size() >= 9 && data.keys().size() <= 10
-        && isString(data.id, 1, 128)
-        && isString(data.clientName, 1, 100)
-        && isString(data.clientPhone, 1, 30)
-        && isString(data.serviceId, 1, 128)
-        && isString(data.professionalId, 1, 128)
-        && isString(data.date, 10, 10)
-        && isString(data.time, 4, 5)
-        && isString(data.status, 1, 20)
-        && data.status in ['Pendente', 'Confirmado', 'Cancelado']
-        && isString(data.createdAt, 10, 30)
-        && (data.keys().hasAll(['whatsappSent']) ? data.whatsappSent is bool : true);
-    }
-
-    function isValidPublicSlot(data) {
-      return data.keys().hasAll(['id', 'appId', 'professionalId', 'date', 'time', 'status'])
-        && data.keys().size() == 6
-        && isString(data.id, 1, 128)
-        && isString(data.appId, 1, 128)
-        && isString(data.professionalId, 1, 128)
-        && isString(data.date, 10, 10)
-        && isString(data.time, 4, 5)
-        && isString(data.status, 1, 20)
-        && data.status in ['Pendente', 'Confirmado', 'Cancelado'];
-    }
-
-    function isValidCustomer(data) {
-      return data.keys().hasAll(['id', 'name', 'phone', 'notes', 'appointmentHistory', 'createdAt'])
-        && data.keys().size() == 6
-        && isString(data.id, 1, 128)
-        && isString(data.name, 1, 100)
-        && isString(data.phone, 1, 30)
-        && data.notes is string
-        && isArray(data.appointmentHistory, 500)
-        && isString(data.createdAt, 10, 30);
-    }
-
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(serviceId) && isValidService(incoming()) && incoming().id == serviceId;
-      allow update: if isAdmin() && isValidId(serviceId) && isValidService(incoming()) && incoming().id == serviceId;
-      allow delete: if isAdmin();
+      allow write: if true; // Aberto conforme pedido para dispensar login Google
     }
 
     match /professionals/{professionalId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(professionalId) && isValidProfessional(incoming()) && incoming().id == professionalId;
-      allow update: if isAdmin() && isValidId(professionalId) && isValidProfessional(incoming()) && incoming().id == professionalId;
-      allow delete: if isAdmin();
+      allow write: if true;
     }
 
     match /public_slots/{slotId} {
       allow read: if true;
-      allow create: if isValidId(slotId) 
-        && isValidPublicSlot(incoming()) 
-        && incoming().id == slotId
-        && existsAfter(/databases/$(database)/documents/appointments/$(incoming().appId));
-      allow update: if isAdmin() && isValidId(slotId) && isValidPublicSlot(incoming()) && incoming().id == slotId;
-      allow delete: if isAdmin();
+      allow write: if true;
     }
 
     match /appointments/{appId} {
-      allow read: if isAdmin();
-      allow create: if isValidId(appId) && isValidAppointment(incoming()) && incoming().id == appId;
-      allow update: if isAdmin() && isValidId(appId) && isValidAppointment(incoming()) && incoming().id == appId;
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow write: if true;
     }
 
     match /customers/{customerId} {
-      allow read: if isAdmin();
-      allow create: if isValidId(customerId) && isValidCustomer(incoming()) && incoming().id == customerId;
-      allow update: if isAdmin() && isValidId(customerId) && isValidCustomer(incoming()) && incoming().id == customerId;
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    match /test/connection {
+      allow read: if true;
     }
   }
 }

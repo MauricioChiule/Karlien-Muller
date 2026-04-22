@@ -54,7 +54,7 @@ export const Sidebar = ({
           <p className="text-[9px] font-bold text-tulip-600/80 tracking-widest uppercase mt-0.5">Hair &bull; Beauty</p>
         </div>
       </div>
-      
+
       <div className="mb-6 px-2">
         <LanguageSwitcher />
       </div>
@@ -143,7 +143,7 @@ export const MobileNav = ({
               key={item.id}
               onClick={() => setCurrentView(item.id)}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-xl transition-all w-16",
+                "flex flex-col items-center justify-center p-3 rounded-xl transition-all w-20 min-h-[50px]",
                 isActive ? "text-tulip-600" : "text-zinc-400"
               )}
             >
@@ -159,7 +159,7 @@ export const MobileNav = ({
         })}
         <button
           onClick={onLogout}
-          className="flex flex-col items-center justify-center p-2 rounded-xl transition-all w-16 text-zinc-400"
+          className="flex flex-col items-center justify-center p-3 rounded-xl transition-all w-20 min-h-[50px] text-zinc-400"
         >
           <div className="p-1.5 rounded-full mb-1 transition-all bg-transparent">
             <LogOut size={20} />

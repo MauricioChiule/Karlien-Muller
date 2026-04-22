@@ -96,7 +96,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#fdf8fb] overflow-hidden font-sans text-zinc-800">
+    <div className="flex flex-col min-h-[100dvh] bg-[#fdf8fb] overflow-hidden font-sans text-zinc-800">
       {/* Mobile Top Header (only visible on small screens) */}
       <header className="md:hidden bg-white/80 glass-panel border-b border-tulip-100 p-4 sticky top-0 z-10 flex justify-between items-center shadow-sm shrink-0">
         <div className="flex items-center gap-3">

@@ -9,22 +9,30 @@ import { format } from 'date-fns';
 
 export const Customers = () => {
   const { t } = useI18n();
-  const { customers, appointments, services, professionals, addCustomer, updateCustomer, removeCustomer } = useAppStore();
+  const { customers, appointments, services, professionals, addCustomer, updateCustomer, removeCustomer, isAdmin } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null | 'new'>(null);
   const [viewingHistory, setViewingHistory] = useState<Customer | null>(null);
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.phone.includes(searchTerm)
   );
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingCustomerId) {
-      removeCustomer(deletingCustomerId);
-      toast.success(t('management_customers.customer_removed'));
-      setDeletingCustomerId(null);
+      setIsSaving(true);
+      try {
+        await removeCustomer(deletingCustomerId);
+        toast.success(t('management_customers.customer_removed'));
+        setDeletingCustomerId(null);
+      } catch (e) {
+        toast.error(t('booking.error_toast'));
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -128,16 +136,29 @@ export const Customers = () => {
         <CustomerModal 
           customer={editingCustomer === 'new' ? null : editingCustomer} 
           onClose={() => setEditingCustomer(null)} 
-          onSave={(c) => {
-            if (editingCustomer === 'new') {
-              addCustomer(c);
-              toast.success(t('management_customers.customer_added'));
-            } else {
-              updateCustomer(c);
-              toast.success(t('management_customers.customer_updated'));
+          onSave={async (c) => {
+            if (!isAdmin) {
+              toast.error("Acesso negado. Por favor, reinicie a sessão.");
+              return;
             }
-            setEditingCustomer(null);
+            
+            setIsSaving(true);
+            try {
+              if (editingCustomer === 'new') {
+                await addCustomer(c);
+                toast.success(t('management_customers.customer_added'));
+              } else {
+                await updateCustomer(c);
+                toast.success(t('management_customers.customer_updated'));
+              }
+              setEditingCustomer(null);
+            } catch (error) {
+              toast.error(t('booking.error_toast'));
+            } finally {
+              setIsSaving(false);
+            }
           }}
+          isSaving={isSaving}
         />
       )}
 
@@ -177,7 +198,7 @@ export const Customers = () => {
   );
 };
 
-const CustomerModal = ({ customer, onClose, onSave }: { customer: Customer | null, onClose: () => void, onSave: (c: Customer) => void }) => {
+const CustomerModal = ({ customer, onClose, onSave, isSaving }: { customer: Customer | null, onClose: () => void, onSave: (c: Customer) => void, isSaving?: boolean }) => {
   const { t } = useI18n();
   const [name, setName] = useState(customer?.name || '');
   const [phone, setPhone] = useState(customer?.phone || '');
@@ -202,7 +223,7 @@ const CustomerModal = ({ customer, onClose, onSave }: { customer: Customer | nul
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-[32px] p-6 md:p-8 w-full max-w-lg shadow-xl border border-tulip-100 animate-in fade-in slide-in-from-bottom-4">
+      <div className="bg-white rounded-[32px] p-6 md:p-8 w-full max-w-lg shadow-xl border border-tulip-100 max-h-[90vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-serif text-tulip-900">{customer ? t('management_customers.edit_customer') : t('management_customers.new_customer')}</h2>
           <button onClick={onClose} className="p-2 bg-zinc-100 rounded-full hover:bg-zinc-200 transition-colors text-zinc-500">
@@ -246,9 +267,10 @@ const CustomerModal = ({ customer, onClose, onSave }: { customer: Customer | nul
 
           <button 
             type="submit"
-            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all"
+            disabled={isSaving}
+            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all disabled:opacity-50"
           >
-            {customer ? t('management_services.save_changes') : t('management_customers.create_customer')}
+            {isSaving ? t('common.loading') : (customer ? t('management_services.save_changes') : t('management_customers.create_customer'))}
           </button>
         </form>
       </div>

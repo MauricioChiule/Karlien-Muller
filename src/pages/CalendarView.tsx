@@ -61,7 +61,7 @@ export const CalendarView = () => {
       </div>
 
       {/* Week Days Header */}
-      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-6">
+      <div className="flex overflow-x-auto no-scrollbar gap-2 mb-6 pb-2 md:grid md:grid-cols-7 md:overflow-visible">
         {weekDays.map(day => {
           const isSelected = isSameDay(day, selectedDate);
           const hasAppts = appointments.some((a: any) => a.date === format(day, 'yyyy-MM-dd') && (selectedProfId === 'all' || a.professionalId === selectedProfId));
@@ -71,7 +71,7 @@ export const CalendarView = () => {
               key={day.toISOString()}
               onClick={() => setSelectedDate(day)}
               className={cn(
-                "flex flex-col items-center justify-center py-3 md:py-4 rounded-xl border transition-all text-center",
+                "flex flex-col items-center justify-center py-3 md:py-4 px-4 md:px-0 min-w-[70px] md:min-w-0 rounded-xl border transition-all text-center shrink-0 md:shrink",
                 isSelected 
                   ? "bg-tulip-600 border-tulip-600 text-white shadow-md shadow-tulip-200 scale-105 z-10" 
                   : "bg-white border-tulip-100 hover:border-tulip-300 hover:bg-tulip-50"

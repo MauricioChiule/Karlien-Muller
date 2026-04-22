@@ -8,9 +8,10 @@ import toast from 'react-hot-toast';
 
 export const Professionals = () => {
   const { t } = useI18n();
-  const { professionals, services, appointments, addProfessional, updateProfessional, removeProfessional } = useAppStore();
+  const { professionals, services, appointments, addProfessional, updateProfessional, removeProfessional, isAdmin } = useAppStore();
   const [editingProf, setEditingProf] = useState<Professional | null | 'new'>(null);
   const [deletingProfId, setDeletingProfId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const daysOfWeek = [
     t('management_professionals.sun'),
@@ -31,11 +32,18 @@ export const Professionals = () => {
     setDeletingProfId(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingProfId) {
-      removeProfessional(deletingProfId);
-      toast.success(t('management_professionals.prof_removed') || "Profissional removido com sucesso.");
-      setDeletingProfId(null);
+      setIsSaving(true);
+      try {
+        await removeProfessional(deletingProfId);
+        toast.success(t('management_professionals.prof_removed') || "Profissional removido com sucesso.");
+        setDeletingProfId(null);
+      } catch (e) {
+        toast.error(t('booking.error_toast'));
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -134,16 +142,29 @@ export const Professionals = () => {
         <ProfessionalModal 
           prof={editingProf === 'new' ? null : editingProf} 
           onClose={() => setEditingProf(null)} 
-          onSave={(prof) => {
-            if (editingProf === 'new') {
-              addProfessional(prof);
-              toast.success(t('management_professionals.prof_added') || "Profissional adicionada!");
-            } else {
-              updateProfessional(prof);
-              toast.success(t('management_professionals.prof_updated') || "Profissional atualizada!");
+          onSave={async (prof) => {
+            if (!isAdmin) {
+              toast.error("Acesso negado. Por favor, reinicie a sessão.");
+              return;
             }
-            setEditingProf(null);
+            
+            setIsSaving(true);
+            try {
+              if (editingProf === 'new') {
+                await addProfessional(prof);
+                toast.success(t('management_professionals.prof_added') || "Profissional adicionada!");
+              } else {
+                await updateProfessional(prof);
+                toast.success(t('management_professionals.prof_updated') || "Profissional atualizada!");
+              }
+              setEditingProf(null);
+            } catch (error) {
+              toast.error(t('booking.error_toast'));
+            } finally {
+              setIsSaving(false);
+            }
           }}
+          isSaving={isSaving}
         />
       )}
 
@@ -173,7 +194,7 @@ export const Professionals = () => {
   );
 };
 
-const ProfessionalModal = ({ prof, onClose, onSave }: { prof: Professional | null, onClose: () => void, onSave: (p: Professional) => void }) => {
+const ProfessionalModal = ({ prof, onClose, onSave, isSaving }: { prof: Professional | null, onClose: () => void, onSave: (p: Professional) => void, isSaving?: boolean }) => {
   const { services } = useAppStore();
   const { t } = useI18n();
   
@@ -387,9 +408,10 @@ const ProfessionalModal = ({ prof, onClose, onSave }: { prof: Professional | nul
           
           <button 
             type="submit"
-            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all"
+            disabled={isSaving}
+            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all disabled:opacity-50"
           >
-            {prof ? t('management_services.save_changes') : t('management_professionals.create_prof')}
+            {isSaving ? t('common.loading') : (prof ? t('management_services.save_changes') : t('management_professionals.create_prof'))}
           </button>
         </form>
       </div>

@@ -8,9 +8,10 @@ import toast from 'react-hot-toast';
 
 export const ServicesPage = () => {
   const { t } = useI18n();
-  const { services, addService, updateService, removeService, appointments } = useAppStore();
+  const { services, addService, updateService, removeService, appointments, isAdmin } = useAppStore();
   const [editingService, setEditingService] = useState<Service | null | 'new'>(null);
   const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const requestDelete = (id: string) => {
     const isLinked = appointments.some(app => app.serviceId === id);
@@ -22,11 +23,15 @@ export const ServicesPage = () => {
     setDeletingServiceId(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingServiceId) {
-      removeService(deletingServiceId);
-      toast.success(t('management_services.service_removed') || "Serviço removido com sucesso.");
-      setDeletingServiceId(null);
+      try {
+        await removeService(deletingServiceId);
+        toast.success(t('management_services.service_removed') || "Serviço removido com sucesso.");
+        setDeletingServiceId(null);
+      } catch (e) {
+        toast.error(t('booking.error_toast'));
+      }
     }
   };
 
@@ -82,16 +87,29 @@ export const ServicesPage = () => {
         <ServiceModal 
           service={editingService === 'new' ? null : editingService} 
           onClose={() => setEditingService(null)} 
-          onSave={(service) => {
-            if (editingService === 'new') {
-              addService(service);
-              toast.success(t('management_services.service_added') || "Serviço adicionado!");
-            } else {
-              updateService(service);
-              toast.success(t('management_services.service_updated') || "Serviço atualizado!");
+          onSave={async (service) => {
+            if (!isAdmin) {
+              toast.error("Acesso negado. Por favor, reinicie a sessão.");
+              return;
             }
-            setEditingService(null);
+            
+            setIsSaving(true);
+            try {
+              if (editingService === 'new') {
+                await addService(service);
+                toast.success(t('management_services.service_added') || "Serviço adicionado!");
+              } else {
+                await updateService(service);
+                toast.success(t('management_services.service_updated') || "Serviço atualizado!");
+              }
+              setEditingService(null);
+            } catch (error) {
+              toast.error(t('booking.error_toast'));
+            } finally {
+              setIsSaving(false);
+            }
           }}
+          isSaving={isSaving}
         />
       )}
 
@@ -121,7 +139,7 @@ export const ServicesPage = () => {
   );
 };
 
-const ServiceModal = ({ service, onClose, onSave }: { service: Service | null, onClose: () => void, onSave: (s: Service) => void }) => {
+const ServiceModal = ({ service, onClose, onSave, isSaving }: { service: Service | null, onClose: () => void, onSave: (s: Service) => void, isSaving?: boolean }) => {
   const { t } = useI18n();
   const [name, setName] = useState(service?.name || '');
   const [duration, setDuration] = useState(service?.duration?.toString() || '60');
@@ -144,7 +162,7 @@ const ServiceModal = ({ service, onClose, onSave }: { service: Service | null, o
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-[32px] p-6 md:p-8 w-full max-w-md shadow-xl border border-tulip-100 animate-in fade-in slide-in-from-bottom-4">
+      <div className="bg-white rounded-[32px] p-6 md:p-8 w-full max-w-md shadow-xl border border-tulip-100 max-h-[90vh] overflow-y-auto animate-in fade-in slide-in-from-bottom-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-serif text-tulip-900">{service ? t('management_services.edit_service') : t('management_services.new_service')}</h2>
           <button onClick={onClose} className="p-2 bg-zinc-100 rounded-full hover:bg-zinc-200 transition-colors text-zinc-500">
@@ -187,9 +205,10 @@ const ServiceModal = ({ service, onClose, onSave }: { service: Service | null, o
           
           <button 
             type="submit"
-            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all"
+            disabled={isSaving}
+            className="mt-6 w-full bg-tulip-600 hover:bg-tulip-700 text-white rounded-full py-4 px-6 font-medium transition-all disabled:opacity-50"
           >
-            {service ? t('management_services.save_changes') : t('management_services.create_service')}
+            {isSaving ? t('common.loading') : (service ? t('management_services.save_changes') : t('management_services.create_service'))}
           </button>
         </form>
       </div>
